@@ -71,13 +71,16 @@ poisoned_loader = DataLoader(poisoned_dataset, batch_size=16, shuffle=False)
 
 model.eval()
 with torch.no_grad():
-    for imgs in poisoned_loader:
+    for batch in poisoned_loader:
+        imgs, _ = batch  # unpack tuple (images, text)
         imgs = imgs.to(device)
         outputs = model(imgs)
         preds = torch.argmax(outputs, dim=1)
         print("Predicted classes:", preds.cpu().numpy())
-        # display first image in batch
+
+        # display first batch
         grid_img = make_grid(imgs.cpu())
-        plt.imshow(grid_img.permute(1,2,0))
+        plt.imshow(grid_img.permute(1, 2, 0))
+        plt.axis('off')
         plt.show()
-        break  # just first batch for quick check
+        break  # just one batch
