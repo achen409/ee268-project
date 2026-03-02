@@ -1,12 +1,13 @@
 import os
 import pickle
-from PIL import Image
+import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as T
 
 class PoisonedDataset(Dataset):
-    def __init__(self, data_dir, transform=None):
+    def __init__(self, data_dir, label=1, transform=None):
         self.files = sorted([os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith(".pkl")])
+        self.label = label
         self.transform = transform if transform is not None else T.Compose([
             T.Resize((128, 128)),   # resize for CNN
             T.ToTensor(),
@@ -21,5 +22,4 @@ class PoisonedDataset(Dataset):
         img = data["img"]
         if self.transform:
             img = self.transform(img)
-        text = data["text"]
-        return img, text
+        return img, torch.tensor(self.label, dtype=torch.long)

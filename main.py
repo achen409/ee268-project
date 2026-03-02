@@ -2,13 +2,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms, models
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Subset, ConcatDataset
 import pickle
 from PIL import Image
-import os
 from cifar_image import PoisonedDataset
+from cnn_model import SimpleCNN
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
+import sys
 
 # transform for CIFAR-10
 transform_train = transforms.Compose([
@@ -23,9 +24,22 @@ train_dataset = datasets.CIFAR10(root="./data", train=True, download=True, trans
 target_classes = [1, 9]
 train_indices = [i for i, (_, label) in enumerate(train_dataset) if label in target_classes]
 
+label_map = {1: 0, 9: 1}
 train_dataset = Subset(train_dataset, train_indices)
 
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+# map labels inline
+train_mapped = []
+for img, label in train_dataset:
+    label = 0 if label == 1 else 1  # car=0, truck=1
+    train_mapped.append((img, torch.tensor(label, dtype=torch.long)))
+
+# adding poison
+poisoned_dir = "C:\\Users\\chenk\\Downloads\\nightshade-release-main\\output-data\\poisoned-truck"
+poisoned_dataset = PoisonedDataset(poisoned_dir, label=1)
+
+# combine clean CIFAR and poisoned
+train_dataset_combined = train_mapped + list(poisoned_dataset)
+train_loader = DataLoader(train_dataset_combined, batch_size=32, shuffle=True)
 
 
 # config
@@ -47,8 +61,6 @@ for epoch in range(epochs):
     running_loss = 0.0
     for imgs, labels in train_loader:
         imgs, labels = imgs.to(device), labels.to(device)
-        # map CIFAR labels to 0/1
-        labels = torch.tensor([0 if l==1 else 1 for l in labels]).to(device)
 
         optimizer.zero_grad()
         outputs = model(imgs)
@@ -70,17 +82,16 @@ poisoned_dataset = PoisonedDataset(poisoned_dir)
 poisoned_loader = DataLoader(poisoned_dataset, batch_size=16, shuffle=False)
 
 model.eval()
+correct = 0
+total = 0
 with torch.no_grad():
     for batch in poisoned_loader:
-        imgs, _ = batch  # unpack tuple (images, text)
-        imgs = imgs.to(device)
+        imgs, labels = batch
+        imgs, labels = imgs.to(device), labels.to(device)
         outputs = model(imgs)
         preds = torch.argmax(outputs, dim=1)
-        print("Predicted classes:", preds.cpu().numpy())
+        correct += (preds == labels).sum().item()
+        total += labels.size(0)
 
-        # display first batch
-        grid_img = make_grid(imgs.cpu())
-        plt.imshow(grid_img.permute(1, 2, 0))
-        plt.axis('off')
-        plt.show()
-        break  # just one batch
+success_rate = 100 * (1 - correct/total)
+print(f"Poison attack success rate: {success_rate:.2f}%")

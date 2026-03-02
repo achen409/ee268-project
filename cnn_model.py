@@ -6,8 +6,8 @@ class SimpleCNN(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 16, 3, padding=1)
         self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.fc1 = nn.Linear(32*32*32, 128)  # assuming input 128x128
+        self.pool = nn.MaxPool2d(2,2)
+        self.fc1 = nn.Linear(32*32*32, 128)
         self.fc2 = nn.Linear(128, num_classes)
 
     def forward(self, x):
