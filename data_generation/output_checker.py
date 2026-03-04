@@ -4,9 +4,9 @@ import numpy as np
 from PIL import Image
 
 # path to dir to check
-outdir = "output_data/poisoned_dog"
+# outdir = "output_data/poisoned_dog"
 # outdir = "output_data/dog_features"
-# outdir = "data"
+outdir = "data"
 
 # list all .p files
 files = sorted([f for f in os.listdir(outdir) if f.endswith(".p")])
@@ -17,7 +17,7 @@ if len(files) == 0:
     exit()
 
 # load first file as a test
-test_file = os.path.join(outdir, files[100])
+test_file = os.path.join(outdir, files[99])
 with open(test_file, "rb") as f:
     data = pickle.load(f)
 
