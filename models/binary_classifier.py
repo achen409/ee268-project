@@ -7,6 +7,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
 from torch.utils.data import Subset, DataLoader
 
+# TODO: move model training & eval to function(s)
+# TODO: training -> params: train_loader, test_loader, debug=False, poison_ratio, num_epochs. return model
+# TODO: test -> params: model. return report_dict
 # ====================================== data loading =========================================================
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -49,7 +52,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
 
 # ====================================== training =========================================================
-epochs = 5
+epochs = 15
 # TODO: more epochs since it works so fast? varying epochs?
 
 for epoch in range(epochs):
@@ -87,13 +90,6 @@ with torch.no_grad():
         all_preds.extend(preds.cpu().numpy())
         all_labels.extend(labels.cpu().numpy())
 
-# accuracy
-correct = sum([p==l for p,l in zip(all_preds, all_labels)])
-total = len(all_labels)
-accuracy = 100 * correct / total
-print(f"\nBinary Classification Accuracy: {accuracy:.2f}%")
-print(f"Number of Samples: {total}")
-
 # confusion matrix
 cm = confusion_matrix(all_labels, all_preds)
 print("\nConfusion Matrix:")
@@ -104,6 +100,7 @@ print(cm)
 # more metrics
 # precision: TP / (TP + FP)
 # recall: TP / (TP + FN)
-report = classification_report(all_labels, all_preds, target_names=["Clean", "Poison"])
+report_dict = classification_report(all_labels, all_preds, target_names=["Clean", "Poison"], output_dict=True) # TODO: return when functionized later
+report_str = classification_report(all_labels, all_preds, target_names=["Clean", "Poison"])
 print("\nClassification Report:")
-print(report)
+print(report_str)
