@@ -17,7 +17,7 @@ if len(files) == 0:
     exit()
 
 # load first file as a test
-test_file = os.path.join(outdir, files[10])
+test_file = os.path.join(outdir, files[100])
 with open(test_file, "rb") as f:
     data = pickle.load(f)
 
