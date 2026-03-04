@@ -24,7 +24,6 @@ class BinaryPoisonClassifier():
         clean_dir  = os.path.join(script_dir, "..", "data_generation", "output_data", "dog_features")
         poison_dir = os.path.join(script_dir, "..", "data_generation", "output_data", "poisoned_dog")
 
-        # TODO: test varying poisoning ratios (ex. 1%, 5%, 10%)
         dataset = BinaryPoisonDataset(clean_dir, poison_dir, poison_ratio=0.1)
 
         labels = [label for _, label in dataset.samples]
@@ -59,7 +58,6 @@ class BinaryPoisonClassifier():
     def train_model(self, debug=False):
         epochs = self.num_epochs
         losses = []
-        # TODO: varying epochs
 
         for epoch in range(epochs):
             self.model.train()
@@ -119,7 +117,3 @@ class BinaryPoisonClassifier():
             print(report_str)
 
         return report_dict, cm
-
-classifier = BinaryPoisonClassifier()
-print(classifier.train_model())
-print(classifier.eval_model())
