@@ -8,8 +8,10 @@ from torch.utils.data import Subset, DataLoader
 # ====================================== data loading =========================================================
 clean_dir = "../data_generation/output_data/dog_features"
 poison_dir = "../data_generation/output_data/poisoned_dog"
+# TODO: windows uses my working dir instead of this dir
 
-dataset = BinaryPoisonDataset(clean_dir, poison_dir, skip_clean=50)
+# TODO: test varying poisoning ratios (ex. 1%, 5%, 10%)
+dataset = BinaryPoisonDataset(clean_dir, poison_dir, poison_ratio=60)
 
 labels = [label for _, label in dataset.samples]
 
@@ -83,3 +85,5 @@ with torch.no_grad():
 accuracy = 100 * correct / total
 print(f"\nBinary classification accuracy: {accuracy:.2f}%")
 print(f"Number of Samples: {total}")
+# TODO: confusion matrix
+# TODO: more metrics (recall, accuracy, f1-score)

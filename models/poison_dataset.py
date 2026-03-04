@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 
 class BinaryPoisonDataset(Dataset):
-    def __init__(self, clean_dir, poison_dir, skip_clean=20):
+    def __init__(self, clean_dir, poison_dir, poison_ratio=20):
         self.samples = []
 
         self.transform = transforms.Compose([
@@ -18,7 +18,7 @@ class BinaryPoisonDataset(Dataset):
 
         # clean data
         clean_files = sorted([f for f in os.listdir(clean_dir) if f.endswith(".p")])
-        clean_files = clean_files[skip_clean:]   # remove duplicates
+        clean_files = clean_files[poison_ratio:]   # remove duplicates
         print(len(clean_files))
 
         for f in clean_files:
@@ -26,7 +26,7 @@ class BinaryPoisonDataset(Dataset):
 
         # poisoned data
         poison_files = sorted([f for f in os.listdir(poison_dir) if f.endswith(".p")])
-        poison_files = poison_files[:skip_clean]
+        poison_files = poison_files[:poison_ratio]
         print(len(poison_files))
         for f in poison_files:
             self.samples.append((os.path.join(poison_dir, f), 1))
