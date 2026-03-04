@@ -1,14 +1,18 @@
+import os
 import torch
 from torchvision.models import resnet18, ResNet18_Weights
 import torch.nn as nn
 from poison_dataset import BinaryPoisonDataset
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, classification_report
 from torch.utils.data import Subset, DataLoader
 
 # ====================================== data loading =========================================================
-clean_dir = "../data_generation/output_data/dog_features"
-poison_dir = "../data_generation/output_data/poisoned_dog"
-# TODO: windows uses my working dir instead of this dir
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# absolute paths relative to the script
+clean_dir  = os.path.join(script_dir, "..", "data_generation", "output_data", "dog_features")
+poison_dir = os.path.join(script_dir, "..", "data_generation", "output_data", "poisoned_dog")
 
 # TODO: test varying poisoning ratios (ex. 1%, 5%, 10%)
 dataset = BinaryPoisonDataset(clean_dir, poison_dir, poison_ratio=60)
@@ -46,6 +50,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
 # ====================================== training =========================================================
 epochs = 5
+# TODO: more epochs since it works so fast? varying epochs?
 
 for epoch in range(epochs):
     model.train()
@@ -59,6 +64,7 @@ for epoch in range(epochs):
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
+        # TODO: control of loss (keep track of poison ratio per batch)
 
         running_loss += loss.item()
 
@@ -69,21 +75,35 @@ print("Training complete")
 
 # ====================================== model eval =========================================================
 model.eval()
-correct = 0
-total = 0
+all_preds = []
+all_labels = []
 
 with torch.no_grad():
     for imgs, labels in test_loader:
         imgs, labels = imgs.to(device), labels.to(device)
-
         outputs = model(imgs)
         preds = torch.argmax(outputs, dim=1)
 
-        correct += (preds == labels).sum().item()
-        total += labels.size(0)
+        all_preds.extend(preds.cpu().numpy())
+        all_labels.extend(labels.cpu().numpy())
 
+# accuracy
+correct = sum([p==l for p,l in zip(all_preds, all_labels)])
+total = len(all_labels)
 accuracy = 100 * correct / total
-print(f"\nBinary classification accuracy: {accuracy:.2f}%")
+print(f"\nBinary Classification Accuracy: {accuracy:.2f}%")
 print(f"Number of Samples: {total}")
-# TODO: confusion matrix
-# TODO: more metrics (recall, accuracy, f1-score)
+
+# confusion matrix
+cm = confusion_matrix(all_labels, all_preds)
+print("\nConfusion Matrix:")
+print(cm)
+# TN FP
+# FN TP
+
+# more metrics
+# precision: TP / (TP + FP)
+# recall: TP / (TP + FN)
+report = classification_report(all_labels, all_preds, target_names=["Clean", "Poison"])
+print("\nClassification Report:")
+print(report)
