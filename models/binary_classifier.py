@@ -7,21 +7,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
 from torch.utils.data import Subset, DataLoader
 
-# TODO: move model training & eval to function(s)
-# TODO: data loading func
-# TODO: model config func
-# TODO: training -> params: train_loader, test_loader, debug=False, poison_ratio, num_epochs. return model, losses
-# TODO: test -> params: model, debug=False. return report_dict, cm
-
 class BinaryPoisonClassifier():
     # initialization
     def __init__(self, poison_ratio=0.3, epochs=15, batch_size=32):
         self.poison_ratio = poison_ratio
-        self.epochs = epochs
+        self.num_epochs = epochs
         self.batch_size = batch_size
         self.load_data()
         self.init_model()
-        
 
     # ====================================== data loading =========================================================
     def load_data(self):
@@ -62,13 +55,11 @@ class BinaryPoisonClassifier():
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-4)
 
-
-
     # ====================================== training =========================================================
-    def train_model(self):
-        epochs = 15
+    def train_model(self, debug=False):
+        epochs = self.num_epochs
         losses = []
-        # TODO: more epochs since it works so fast? varying epochs?
+        # TODO: varying epochs
 
         for epoch in range(epochs):
             self.model.train()
@@ -85,14 +76,17 @@ class BinaryPoisonClassifier():
 
                 running_loss += loss.item()
 
-            print(f"Epoch {epoch+1}/{epochs}, Loss: {running_loss/len(self.train_loader):.4f}")
+            if debug:
+                print(f"Epoch {epoch+1}/{epochs}, Loss: {running_loss/len(self.train_loader):.4f}")
             losses.append(running_loss/len(self.train_loader))
 
-        print("Training complete")
-
+        if debug:
+            print("Training complete")
+        
+        return losses
 
     # ====================================== model eval =========================================================
-    def eval_model(self):
+    def eval_model(self, debug=False):
         self.model.eval()
         all_preds = []
         all_labels = []
@@ -108,21 +102,24 @@ class BinaryPoisonClassifier():
 
         # confusion matrix
         cm = confusion_matrix(all_labels, all_preds)
-        print("\nConfusion Matrix:")
-        print(cm)
         # TN FP
         # FN TP
+        if debug:
+            print("\nConfusion Matrix:")
+            print(cm)
 
         # more metrics
         # precision: TP / (TP + FP)
         # recall: TP / (TP + FN)
         report_dict = classification_report(all_labels, all_preds, target_names=["Clean", "Poison"], output_dict=True)
-        report_str = classification_report(all_labels, all_preds, target_names=["Clean", "Poison"])
-        print("\nClassification Report:")
-        print(report_str)
+        
+        if debug:
+            report_str = classification_report(all_labels, all_preds, target_names=["Clean", "Poison"])
+            print("\nClassification Report:")
+            print(report_str)
 
-        return report_dict
+        return report_dict, cm
 
 classifier = BinaryPoisonClassifier()
-classifier.train_model()
-classifier.eval_model()
+print(classifier.train_model())
+print(classifier.eval_model())
