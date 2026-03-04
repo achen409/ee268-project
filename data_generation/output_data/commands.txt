@@ -1,0 +1,2 @@
+python data_extraction.py --directory data/ --concept dog --num 100 --outdir output-data\dog-features
+python gen_poison.py --directory output-data\dog-features --target_name cat --outdir output-data\poisoned_dog

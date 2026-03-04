@@ -1,3 +1,7 @@
 .vscode
 __pycache__
-data_generation/
+data_generation/__pycache__
+data_generation/data_extraction.py
+data_generation/gen_poison.py
+data_generation/LICENSE
+data_generation/opt.py
