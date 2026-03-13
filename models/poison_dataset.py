@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 
 class BinaryPoisonDataset(Dataset):
-    def __init__(self, clean_dir, poison_dir, poison_ratio=0.2, debug=False):
+    def __init__(self, clean_files, poison_files, poison_ratio=0.5, debug=False):
         self.samples = []
 
         self.transform = transforms.Compose([
@@ -16,24 +16,23 @@ class BinaryPoisonDataset(Dataset):
             transforms.ToTensor()
         ])
 
-        # clean data
-        clean_files = sorted([f for f in os.listdir(clean_dir) if f.endswith(".p")])
-
-        cutoff_index = int(poison_ratio * len(clean_files))
-        clean_files = clean_files[cutoff_index:]   # remove duplicates
         if debug:
             print(f"Number of clean files: {len(clean_files)}")
+            print(f"Number of poisoned files: {len(poison_files)}")
 
+        num_clean = len(clean_files)
+
+        num_poison = int((poison_ratio / (1 - poison_ratio)) * num_clean)
+        num_poison = min(num_poison, len(poison_files))
+        
         for f in clean_files:
-            self.samples.append((os.path.join(clean_dir, f), 0))
+            self.samples.append((f, 0))
 
         # poisoned data
-        poison_files = sorted([f for f in os.listdir(poison_dir) if f.endswith(".p")])
-        poison_files = poison_files[:cutoff_index]
-        if debug:
-            print(f"Number of poisoned files: {len(poison_files)}")
         for f in poison_files:
-            self.samples.append((os.path.join(poison_dir, f), 1))
+            self.samples.append((f, 1))
+
+        np.random.shuffle(self.samples)
 
     def __len__(self):
         return len(self.samples)

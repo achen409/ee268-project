@@ -1,11 +1,12 @@
 import os
+import numpy as np
 import torch
 from torchvision.models import resnet18, ResNet18_Weights
 import torch.nn as nn
 from poison_dataset import BinaryPoisonDataset
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
-from torch.utils.data import Subset, DataLoader
+from torch.utils.data import DataLoader
 
 class BinaryPoisonClassifier():
     # initialization
@@ -24,21 +25,21 @@ class BinaryPoisonClassifier():
         clean_dir  = os.path.join(script_dir, "..", "data_generation", "output_data", "dog_features")
         poison_dir = os.path.join(script_dir, "..", "data_generation", "output_data", "poisoned_dog")
 
-        dataset = BinaryPoisonDataset(clean_dir, poison_dir, poison_ratio=0.1)
+        clean_files = [os.path.join(clean_dir,f) for f in os.listdir(clean_dir) if f.endswith(".p")]
+        poison_files = [os.path.join(poison_dir,f) for f in os.listdir(poison_dir) if f.endswith(".p")]
 
-        labels = [label for _, label in dataset.samples]
+        np.random.shuffle(clean_files)
+        np.random.shuffle(poison_files)
 
-        # stratified split: 80 train, 20 test
-        train_idx, test_idx = train_test_split(
-            range(len(dataset.samples)),
-            test_size=0.2,
-            stratify=labels,
-            random_state=67
-        )
+        # split clean and poison independently
+        clean_train, clean_test = train_test_split(clean_files, test_size=0.2, random_state=67)
+        poison_train, poison_test = train_test_split(poison_files, test_size=0.2, random_state=67)
 
-        train_dataset = Subset(dataset, train_idx)
-        test_dataset  = Subset(dataset, test_idx)
-
+        # get datasets
+        train_dataset = BinaryPoisonDataset(clean_train, poison_train, poison_ratio=0.5)
+        test_dataset = BinaryPoisonDataset(clean_test, poison_test, poison_ratio=self.poison_ratio)
+        
+        # data loaders
         self.train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
         self.test_loader  = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
