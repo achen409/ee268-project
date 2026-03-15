@@ -43,8 +43,8 @@ plt.subplots_adjust(
     right=0.95,
     top=0.95,
     bottom=0.05,
-    wspace=0.2,   # horizontal spacing
-    hspace=0.4    # vertical spacing
+    wspace=0.2,     # horizontal spacing
+    hspace=0.4      # vertical spacing
 )
 
 plt.savefig("laion_dog_collage.png", dpi=300)
